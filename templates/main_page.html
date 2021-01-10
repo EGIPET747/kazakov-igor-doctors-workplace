@@ -1,0 +1,261 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Личный кабинет
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-10">
+        <h1>Личный кабинет врача: <br>Сергеева Сергея Сергеевича <small style="font-size:14px">(id:{{ doc_id }})</small></h1>
+    </div>
+    <div class="col-2">
+        <h1><div style="" id="datetime"></div></h1>
+    </div>
+</div>
+
+<hr>
+<div class="row">
+    <div class="col-4 card shadow p-2">
+        <div class="card-header text-primary" >
+            КАРТА ОСМОТРА
+        </div>
+        <div class="card-body" id="pacient_data" style="text-align: center; overflow-y: scroll; overflow-x: hidden;  height: 700px">
+            <form id="query_1" name="query_1" class="form-group"> {% csrf_token %}
+                <div class="row">
+                    <div class="col-9">
+                        <label for="persons">ФИО</label>
+                        <select class="mb-2 form-control" name="" id="persons">
+                            {% for person in persons %}
+                                {% if person.id == 0 %}
+                                    <option value="{{ person.id }}" selected>{{ person.fio }}
+                                {% else %}
+                                    <option value="{{ person.id }}">{{ person.fio }}
+                                {% endif %}{{s.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <button class="mb-2 btn btn-primary" style="width:100%; height:100%" type="button" onclick="query()">История болезни</button>
+                    </div>
+                </div>
+                <label for="passport">Серия и номер паспорта</label>
+                <input class="mb-2 form-control" style="margin:2px" type="text" id="passport" name="passport" placeholder="1234 123456" disabled>
+                <label for="oms">Номер полиса ОМС</label>
+                <input class="mb-2 form-control" style="margin:2px" type="text" id="oms" name="oms" placeholder="12 123-12-34" disabled>
+                <label for="symptoms">Симптомы</label>
+                <input type="text" class="form-control" id="s_filter" placeholder="Начните вводить симптом..." title="фильтр">
+                <select name="symptoms" id="symptoms" multiple class="form-control mb-2">
+                    {% for s in symptoms %}
+                        {% if s.name == "Здоров" %}<option value="{{ s.id }}" selected>{% else %}<option value="{{ s.id }}">{% endif %}{{s.name}}</option>
+                    {% endfor %}
+                </select>
+                <div id="analyses" class="mb-2" style="display:none">
+                    <label for="diseases">Возможные заболевания</label>
+                    <input type="text" class="form-control" id="d_filter" placeholder="Начните вводить заболевание..." title="фильтр">
+                    <select name="diseases" id="diseases" multiple class="form-control">
+
+                    </select>
+                </div>
+                <div id="end_exam" style="display:none" class="mb-2">
+                    <button type="button" class="btn btn-primary" onclick="end_exam()">Окончить осмотр</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-4 card shadow p-2" id="exam-field">
+        <div class="card-header text-primary">
+            ОПИСАНИЕ ОСМОТРА
+        </div>
+        <form action="" id="text-field">
+            <div class="card-body" style="overflow-y: scroll; overflow-x: hidden;  height: 700px" >
+                <textarea id="exam-description" class="form-control" rows="27" placeholder="Если описание пустое, описание будет сформировано автоматически"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="col-4 card shadow p-2" id="history" style="display:none">
+        <div class="card-header text-primary">
+            ИСТОРИЯ БОЛЕЗНИ
+        </div>
+        <div class="card-body" id="history_body" style="overflow-y: scroll; overflow-x: hidden;  height: 700px" >
+
+        </div>
+    </div>
+</div>
+    <div role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false" style="position: absolute; top:20px; left:40%">
+        <div class="toast-header">
+            <strong class="mr-auto">Внимание</strong>
+        </div>
+        <div class="toast-body">
+            Выберите пациента
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+persons = {{ persons|safe }};
+
+$('#persons').change(function(){
+    person_id = $('#persons').val();
+    if(person_id != 0){
+        $('#passport').val(persons[person_id].passport);
+        $('#oms').val(persons[$('#persons').val()].oms);
+    } else {
+        $('#passport').val('ВЫБЕРИТЕ ПАЦИЕНТА');
+        $('#oms').val('ВЫБЕРИТЕ ПАЦИЕНТА');
+    }
+    if(person_id != 0 && diseases.length > 0){
+        $('#end_exam').show();
+    } else {
+        $('#end_exam').hide();
+    }
+});
+
+
+$('#diseases').change(function(){
+    person_id = $('#persons').val();
+    diseases = $('#diseases').val();
+    if(person_id != 0 && diseases.length > 0){
+        $('#end_exam').show();
+    } else {
+        $('#end_exam').hide();
+    }
+});
+
+
+end_exam = function(){
+    data = {};
+    var csrf_token = $('#query_1 [name="csrfmiddlewaretoken"]').val();
+    data['csrfmiddlewaretoken'] = csrf_token;
+    data['symptoms'] = $('#symptoms').val().join(',');
+    data['diseases'] = $('#diseases').val().join(',');
+    data['person_id'] = $('#persons').val();
+    data['description'] = $('#exam-description').val();
+    if (data['description'] == ''){
+        s = $('#symptoms option:selected').map(function() {
+            return $(this).text();
+        }).get().join(', ');
+        d = $('#diseases option:selected').map(function() {
+            return $(this).text();
+        }).get().join(', ');
+        data['description'] = 'Осмотр. Симптомы: ' + s + '. Заключение: ' + d + '.';
+    console.log(data['description'])
+    }
+    dt = new Date();
+    data['time'] = dt.toLocaleString().replace(', ', ' ');
+    $.ajax({
+        url: '/save_exam/',
+        type: 'POST',
+        data: data,
+        success: function (response) {
+            console.log(response);
+
+        },
+        error: function() {
+            console.log('ERRORS');
+        }
+    });
+}
+
+
+filter = function(f_in, out){
+    var f, o, options, i;
+    f = $('#' + f_in).val();
+    f = f.toUpperCase();
+    o = document.getElementById(out);
+    options = o.getElementsByTagName("option");
+    for (i = 0; i < options.length; i++) {
+        if (options[i].innerHTML.toUpperCase().indexOf(f) > -1) {
+            options[i].style.display = "";
+        } else {
+            options[i].style.display = "none";
+        }
+    }
+}
+$('#s_filter').keyup(function(){filter("s_filter", "symptoms")});
+$('#d_filter').keyup(function(){filter("d_filter", "diseases")});
+
+
+$('#symptoms').change(function(){
+    symptoms = $('#symptoms').val().join(',');
+    console.log(symptoms);
+    if(symptoms != [] || symptoms != [0]){
+        data = {};
+        var csrf_token = $('#query_1 [name="csrfmiddlewaretoken"]').val();
+        data['csrfmiddlewaretoken'] = csrf_token;
+        data['symptoms'] = symptoms;
+        $.ajax({
+            url: '/get_disease/',
+            type: 'POST',
+            data: data,
+            success: function (response) {
+                console.log(response);
+                diseases = document.getElementById('diseases');
+                $('#analyses').show();
+                diseases.innerHTML = '';
+                for (d in response.diseases)
+                    diseases.innerHTML += '<option value="' + response.diseases[d].id + '">' + response.diseases[d].name + '</options>'
+            },
+            error: function() {
+                console.log('ERRORS');
+            }
+        });
+    }
+});
+
+query = function(){
+    person_id =  $('#persons').val();
+    if (person_id == '0'){
+        console.log('пациент не выбран');
+        $('.toast').toast('show');
+        return;
+    }
+    person_history = document.getElementById('history_body');
+    person_history.innerHTML = '';
+    data = {};
+    var csrf_token = $('#query_1 [name="csrfmiddlewaretoken"]').val();
+    data['csrfmiddlewaretoken'] = csrf_token;
+    data['person_id'] = person_id;
+    $.ajax({
+        url: '/get_user_history/',
+        type: 'POST',
+        data: data,
+        success: function (response) {
+            console.log(response.examinations);
+            $('#history').show();
+            for (ex in response.examinations){
+                card = document.createElement('div');
+                border = ''
+                card.innerHTML = '<div class=\"card shadow mb-2 ' + border + '\" name=\"exam_'+ response.examinations[ex].id +'\" id=\"exam_'+ response.examinations[ex] +
+                    '<div class=\"row\">' +
+                        '<div class=\"col-lg-8\">' +
+                            '<small>' + response.examinations[ex].datetime.replace('T', ' ').replace('Z', '') + '<br>' +
+                            '<strong>' + response.examinations[ex].diseases + '<br></strong>' + response.examinations[ex].description + '</small>' +
+
+                        '</div>' +
+                        '<div class=\"m-auto col-lg-12\">' +
+                            '<strong>' + response.examinations[ex].symptoms.join(', ') + '</strong>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>'
+
+                person_history.appendChild(card);
+            }
+        },
+        error: function() {
+            console.log('ERRORS');
+        }
+    });
+};
+
+
+datetime_update = function(){
+    var dt = new Date();
+    var time = dt.toLocaleString().replace(', ', ' ');
+    $('#datetime').text(time);
+}
+datetime_update()
+let timerId = setInterval(datetime_update, 1000);
+</script>
+{% endblock %}
