@@ -1,7 +1,7 @@
 {
-  "name": "Start on Heroku: Python",
-  "description": "A barebones Python app, which can easily be deployed to Heroku.",
-  "image": "heroku/python",
+  "name": "Python",
+  "description": "Python app, which can easily be deployed to Heroku.",
+  "image": "",
   "repository": "https://github.com/EGIPET747/kazakov-igor-doctors-workplace.git",
   "keywords": ["python", "django" ],
   "addons": [ "heroku-postgresql" ],
