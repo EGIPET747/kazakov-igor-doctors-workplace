@@ -25,7 +25,7 @@ SECRET_KEY = 'fl(34uonqck7z99)fa=67im*$2rb-%^g^&!b*ef3gf4i9$*d1_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['kazakov-igor-doctors-workplace.herokuapp.com', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
