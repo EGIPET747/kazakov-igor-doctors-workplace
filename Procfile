@@ -1,2 +1,2 @@
 release: python manage.py migrate
-web: gunicorn --bind 0.0.0.0:8000 project.wsgi
+web: gunicorn --bind https://kazakov-igor-doctors-workplace.herokuapp.com/ project.wsgi
