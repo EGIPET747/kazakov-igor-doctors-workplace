@@ -82,12 +82,20 @@
         </div>
     </div>
 </div>
-    <div role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false" style="position: absolute; top:20px; left:40%">
+    <div id="attention" role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false" style="position: absolute; top:20px; left:40%">
         <div class="toast-header">
             <strong class="mr-auto">Внимание</strong>
         </div>
         <div class="toast-body">
             Выберите пациента
+        </div>
+    </div>
+    <div id="save_success" role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false" style="position: absolute; top:20px; left:40%;">
+        <div class="toast-header">
+            <strong class="mr-auto">Успех</strong>
+        </div>
+        <div class="toast-body">
+            Осмотр сохранен
         </div>
     </div>
 {% endblock %}
@@ -150,7 +158,7 @@ end_exam = function(){
         data: data,
         success: function (response) {
             console.log(response);
-
+            $('#save_success').toast('show');
         },
         error: function() {
             console.log('ERRORS');
@@ -208,7 +216,7 @@ query = function(){
     person_id =  $('#persons').val();
     if (person_id == '0'){
         console.log('пациент не выбран');
-        $('.toast').toast('show');
+        $('#attention').toast('show');
         return;
     }
     person_history = document.getElementById('history_body');

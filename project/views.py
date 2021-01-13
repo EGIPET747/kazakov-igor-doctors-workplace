@@ -32,7 +32,7 @@ def get_history(request):
     if request.method == 'POST':
         try:
             person_id = request.POST.get('person_id')
-            examinations = Examination.objects.filter(person_id=person_id)
+            examinations = Examination.objects.filter(person_id=person_id).order_by('-datetime')
             examinations = [{
                 'datetime': e.datetime,
                 'description': e.description,
